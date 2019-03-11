@@ -46,17 +46,19 @@ Besides [Monero](https://getmonero.org), following coins can be mined using this
 - [Haven](https://havenprotocol.com)
 - [Lethean](https://lethean.io)
 - [Masari](https://getmasari.org)
-- [Plenteum](https://www.plenteum.com/)
 - [QRL](https://theqrl.org)
 - **[Ryo](https://ryo-currency.com) - Upcoming xmr-stak-gui is sponsored by Ryo**
 - [Stellite](https://stellite.cash/)
 - [TurtleCoin](https://turtlecoin.lol)
+- [Plenteum](https://www.plenteum.com/)
 - [Zelerius](https://zelerius.org/)
 
 Ryo currency is a way for us to implement the ideas that we were unable to in
 Monero. See [here](https://github.com/fireice-uk/cryptonote-speedup-demo/) for details.
 
 If your prefered coin is not listed, you can choose one of the following algorithms:
+- variable scratchpad
+	- cryptonight_softshell
 - 256Kib scratchpad memory
     - cryptonight_turtle
 - 1MiB scratchpad memory

@@ -11,6 +11,9 @@ if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
     set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}" CACHE PATH "install prefix" FORCE)
 endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 
+#set dependencies prefix PATH
+set(CMAKE_PREFIX_PATH C:\\xmr-stak-dep\\hwloc;C:\\xmr-stak-dep\\libmicrohttpd;C:\\xmr-stak-dep\\openssl)
+
 # help to find cuda on systems with a software module system
 list(APPEND CMAKE_PREFIX_PATH "$ENV{CUDA_ROOT}")
 

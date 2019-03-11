@@ -7,9 +7,11 @@ sudo: false
 language: cpp
 
 cache:
-  apt: true
-  directories:
-    - $HOME/.cache/cuda
+  - apt: true
+    directories:
+      - $HOME/.cache/cuda
+      - $HOME/AMDAPPSDK-3.0
+  - ccache: true
 
 addons:
   apt:
@@ -18,10 +20,12 @@ addons:
       - libmicrohttpd-dev
       - libssl-dev
       - libhwloc-dev
+      - expect
 
 env:
   global:
     - CUDA_ROOT: $HOME/.cache/cuda
+    - OpenCL_ROOT: $HOME/AMDAPPSDK-3.0
 
 matrix:
   include:
@@ -38,7 +42,8 @@ matrix:
       env:
         - CMAKE_CXX_COMPILER=g++-5
         - CMAKE_C_COMPILER=gcc-5
-        - XMRSTAK_CMAKE_FLAGS="-DCUDA_ARCH=30 -DOpenCL_ENABLE=OFF"
+        - XMRSTAK_CMAKE_FLAGS="-DCUDA_ARCH=30 -DOpenCL_ENABLE=ON"
+        - LABEL="linux-gcc-5-CPU-NVIDIA-AMD"
 
     - os: linux
       compiler: gcc
@@ -54,6 +59,7 @@ matrix:
         - CMAKE_CXX_COMPILER=g++-6
         - CMAKE_C_COMPILER=gcc-6
         - XMRSTAK_CMAKE_FLAGS="-DCUDA_ENABLE=OFF -DOpenCL_ENABLE=OFF"
+        - LABEL="linux-gcc-6-CPU"
 
     # test with disabled HWLOC, MICROHTTPD, OpenSSL and no accelerators
     - os: linux
@@ -70,6 +76,7 @@ matrix:
         - CMAKE_CXX_COMPILER=g++-6
         - CMAKE_C_COMPILER=gcc-6
         - XMRSTAK_CMAKE_FLAGS="-DCUDA_ENABLE=OFF -DOpenCL_ENABLE=OFF -DHWLOC_ENABLE=OFF -DOpenSSL_ENABLE=OFF -DMICROHTTPD_ENABLE=OFF"
+        - LABEL="linux-gcc-6-CPU-BARE"
 
     - os: linux
       compiler: gcc
@@ -85,11 +92,13 @@ matrix:
         - CMAKE_CXX_COMPILER=g++-7
         - CMAKE_C_COMPILER=gcc-7
         - XMRSTAK_CMAKE_FLAGS="-DCUDA_ENABLE=OFF -DOpenCL_ENABLE=OFF"
+        - LABEL="linux-gcc-7-CPU"
 
     - os: osx
       compiler: gcc
       env:
         - XMRSTAK_CMAKE_FLAGS="-DCUDA_ENABLE=OFF -DOpenCL_ENABLE=OFF"
+        - LABEL="osx-gcc-7-CPU"
 
 before_install:
   - . CI/checkPRBranch
@@ -98,29 +107,28 @@ before_install:
     fi
   - export PATH=$CUDA_ROOT/bin:$PATH
 
-install:
-
-  # CUDA
-  - if [ $TRAVIS_OS_NAME != osx ]; then
-      NVCC_FOUND=$(which nvcc >/dev/null && { echo 0; } || { echo 1; });
-      if [ $NVCC_FOUND -ne 0 ]; then
-        mkdir -p $CUDA_ROOT &&
-        cd $CUDA_ROOT &&
-        travis_retry wget https://developer.nvidia.com/compute/cuda/8.0/prod/local_installers/cuda_8.0.44_linux-run &&
-        ls -la &&
-        chmod u+x *-run &&
-        ./cuda_8.0.44_linux-run --silent --toolkit --toolkitpath=$CUDA_ROOT &&
-        rm -rf ./cuda_8.0.44_linux-run $CUDA_ROOT/{samples,jre,doc,share} &&
-        cd -;
-      fi
-    fi;
-
 script:
+  - travis_retry ./scripts/preinstall.sh
   - if [ $TRAVIS_OS_NAME = osx ]; then
-      brew install hwloc;
-      cmake -DMICROHTTPD_ENABLE=OFF -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl ${XMRSTAK_CMAKE_FLAGS} .;
+      cmake -DXMR-STAK_COMPILE=generic -DMICROHTTPD_ENABLE=OFF -DOPENSSL_ROOT_DIR=/usr/local/opt/openssl ${XMRSTAK_CMAKE_FLAGS} .;
     else
-      cmake -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER} -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER} ${XMRSTAK_CMAKE_FLAGS} .;
+      cmake -DXMR-STAK_COMPILE=generic -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER} -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER} ${XMRSTAK_CMAKE_FLAGS} .;
     fi;
-  - make VERBOSE=1 install
+  - make VERBOSE=1 install -j2
   - ./bin/xmr-stak --help
+
+before_deploy:
+- if [[ "${TRAVIS_TAG}" == "" ]]; then export TRAVIS_TAG=${TRAVIS_COMMIT} ; fi
+- cd bin
+- TARGETS="xmr-stak libxmr-stak-asm.a libxmr-stak-c.a libxmr-stak-backend.a"
+- if [ $TRAVIS_OS_NAME != osx ]; then strip ${TARGETS} ; fi
+- rm -rf xmr-stak-${TRAVIS_TAG}
+- mkdir xmr-stak-${TRAVIS_TAG}
+- cp ${TARGETS} xmr-stak-${TRAVIS_TAG}
+- if [[ -e libxmrstak_cuda_backend.so ]]; then cp libxmrstak_cuda_backend.so xmr-stak-${TRAVIS_TAG} ; fi
+- if [[ -e libxmrstak_opencl_backend.so ]]; then cp libxmrstak_opencl_backend.so xmr-stak-${TRAVIS_TAG} ; fi
+- cp ../LICENSE ../THIRD-PARTY-LICENSES xmr-stak-${TRAVIS_TAG}
+- tar cvfz xmr-stak-${TRAVIS_TAG}-${LABEL}.tar.gz xmr-stak-${TRAVIS_TAG}/
+- rm -rf builds
+- mkdir builds
+- cp xmr-stak-${TRAVIS_TAG}-${LABEL}.tar.gz builds

@@ -25,9 +25,36 @@ build_script:
   - cmake -G "Visual Studio 14 2015 Win64" -T v140,host=x64 .. -DCUDA_ARCH=30
   - cmake --build . --config Release --target install
 
+after_build:
+  - if not defined APPVEYOR_REPO_TAG_NAME (set APPVEYOR_REPO_TAG_NAME=%APPVEYOR_REPO_COMMIT%)
+  - cd bin\Release
+  - mkdir ple-stak-%APPVEYOR_REPO_TAG_NAME%
+  - copy *.exe ple-stak-%APPVEYOR_REPO_TAG_NAME%
+  - copy *.dll ple-stak-%APPVEYOR_REPO_TAG_NAME%
+  - copy C:\xmr-stak-dep\openssl\bin\* ple-stak-%APPVEYOR_REPO_TAG_NAME%
+  - copy ..\..\..\LICENSE ple-stak-%APPVEYOR_REPO_TAG_NAME%
+  - copy ..\..\..\THIRD-PARTY-LICENSES ple-stak-%APPVEYOR_REPO_TAG_NAME%
+  - 7z a ple-stak-%APPVEYOR_REPO_TAG_NAME%-windows.zip ple-stak-%APPVEYOR_REPO_TAG_NAME%
+  - copy ple-stak-%APPVEYOR_REPO_TAG_NAME%-windows.zip ..\..\..\
+  
+artifacts:
+  - path: ple-stak-$(APPVEYOR_REPO_TAG_NAME)-windows.zip
+    name: PleStakRelease
+
 test_script:
   - cd c:\xmr-stak\build\bin\Release
   - dir
   - copy C:\xmr-stak-dep\openssl\bin\* .
   - set XMRSTAK_NOWAIT=1
   - xmr-stak.exe --help --noUAC
+
+deploy:
+  - provider: GitHub
+    auth_token:
+      secure: 2qCLLzAO0qB7okhdB2FLmC5y4HLreOoHF/JhWl/m7xOjVkaYH9o0jlV33evVtzzH
+    artifact: PleStakRelease
+    draft: false
+    prerelease: false
+    on:
+      appveyor_repo_name: plenteum/ple-stak
+      appveyor_repo_tag: true
