@@ -40,11 +40,7 @@ namespace xmrstak
 				}
 
 				uint32_t scratchpad = (CN_MEMORY / 8) + (static_cast<uint32_t>(offset) * CN_SOFT_SHELL_PAD_MULTIPLIER);
-				scratchpad = (static_cast<uint64_t>(scratchpad / 64)) * 64;
-				if ((scratchpad / 64) % 2 != 0) //if the scratchpad divided by 64 is not an even number, then make it an even number that divisible by 64
-				{
-					scratchpad -= 64; //simply subtract 64 which will make the scratchpad divided by 64 result an even number
-				}
+				scratchpad = (static_cast<uint64_t>(scratchpad / 128)) * 128;
 				uint32_t iterations = CN_SOFT_SHELL_ITER + (static_cast<uint32_t>(offset) * CN_SOFT_SHELL_ITER_MULTIPLIER);
 				uint32_t mask = ((((scratchpad / 2)) - 1u) / 16) * 16;
 
@@ -68,11 +64,7 @@ namespace xmrstak
 				}
 
 				uint32_t scratchpad = (CN_MEMORY / 8) + (static_cast<uint32_t>(offset) * CN_SOFT_SHELL_PAD_MULTIPLIER);
-				scratchpad = (static_cast<uint64_t>(scratchpad / 64)) * 64;
-				if ((scratchpad / 64) % 2 != 0) //if the scratchpad divided by 64 is not an even number, then make it an even number that divisible by 64
-				{
-					scratchpad -= 64; //simply subtract 64 which will make the scratchpad divided by 64 result an even number
-				}
+				scratchpad = (static_cast<uint64_t>(scratchpad / 128)) * 128;
 				uint32_t iterations = CN_SOFT_SHELL_ITER + (static_cast<uint32_t>(offset) * CN_SOFT_SHELL_ITER_MULTIPLIER);
 				uint32_t mask = ((((scratchpad / 2)) - 1u) / 16) * 16;
 
